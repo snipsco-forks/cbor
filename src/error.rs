@@ -3,6 +3,7 @@ use serde::de;
 use serde::ser;
 use std::error;
 use std::fmt;
+#[cfg(feature = "std")]
 use std::io;
 use std::result;
 
@@ -35,6 +36,7 @@ impl Error {
         Error(ErrorImpl { code, offset })
     }
 
+    #[cfg(feature = "std")]
     pub(crate) fn io(error: io::Error) -> Error {
         Error(ErrorImpl {
             code: ErrorCode::Io(error),
@@ -42,11 +44,25 @@ impl Error {
         })
     }
 
+    #[cfg(not(feature = "std"))]
+    pub(crate) fn io<IO>(_error: IO) -> Error {
+        Error(ErrorImpl {
+            code: ErrorCode::AnyIo,
+            offset: 0,
+        })
+    }
+
     /// Categorizes the cause of this error.
     pub fn classify(&self) -> Category {
         match self.0.code {
+            #[cfg(feature = "std")]
             ErrorCode::Message(_) => Category::Data,
+            #[cfg(feature = "std")]
             ErrorCode::Io(_) => Category::Io,
+            #[cfg(not(feature = "std"))]
+            ErrorCode::AnyMessage => Category::Data,
+            #[cfg(not(feature = "std"))]
+            ErrorCode::AnyIo => Category::Io,
             ErrorCode::EofWhileParsingValue |
             ErrorCode::EofWhileParsingArray |
             ErrorCode::EofWhileParsingMap => Category::Eof,
@@ -95,6 +111,7 @@ impl Error {
     }
 }
 
+#[cfg(feature = "std")]
 impl error::Error for Error {
     fn description(&self) -> &str {
         match self.0.code {
@@ -106,6 +123,25 @@ impl error::Error for Error {
     fn cause(&self) -> Option<&error::Error> {
         match self.0.code {
             ErrorCode::Io(ref err) => Some(err),
+            _ => None,
+        }
+    }
+}
+
+// Temporary installment until everything in this crate is as lenient with std::error::Error being
+// implemneted on errors as serde is
+#[cfg(not(feature = "std"))]
+impl error::Error for Error {
+    fn description(&self) -> &str {
+        match self.0.code {
+            ErrorCode::AnyIo => unimplemented!(),
+            _ => "CBOR error",
+        }
+    }
+
+    fn cause(&self) -> Option<&error::Error> {
+        match self.0.code {
+            ErrorCode::AnyIo => unimplemented!(),
             _ => None,
         }
     }
@@ -133,7 +169,11 @@ impl de::Error for Error {
         T: fmt::Display,
     {
         Error(ErrorImpl {
+            #[cfg(feature = "std")]
             code: ErrorCode::Message(msg.to_string()),
+            // FIXME: causes 'unused variable'; alternative would be duplicating the whole function
+            #[cfg(not(feature = "std"))]
+            code: ErrorCode::AnyMessage,
             offset: 0,
         })
     }
@@ -153,7 +193,11 @@ impl ser::Error for Error {
         T: fmt::Display,
     {
         Error(ErrorImpl {
+            #[cfg(feature = "std")]
             code: ErrorCode::Message(msg.to_string()),
+            // FIXME: causes 'unused variable'; alternative would be duplicating the whole function
+            #[cfg(not(feature = "std"))]
+            code: ErrorCode::AnyMessage,
             offset: 0,
         })
     }
@@ -167,8 +211,14 @@ struct ErrorImpl {
 
 #[derive(Debug)]
 pub(crate) enum ErrorCode {
+#[cfg(feature = "std")]
     Message(String),
+#[cfg(feature = "std")]
     Io(io::Error),
+#[cfg(not(feature = "std"))]
+    AnyMessage,
+#[cfg(not(feature = "std"))]
+    AnyIo,
     EofWhileParsingValue,
     EofWhileParsingArray,
     EofWhileParsingMap,
@@ -186,8 +236,14 @@ pub(crate) enum ErrorCode {
 impl fmt::Display for ErrorCode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            #[cfg(feature = "std")]
             ErrorCode::Message(ref msg) => f.write_str(msg),
+            #[cfg(feature = "std")]
             ErrorCode::Io(ref err) => fmt::Display::fmt(err, f),
+            #[cfg(not(feature = "std"))]
+            ErrorCode::AnyMessage => f.write_str("other error"),
+            #[cfg(not(feature = "std"))]
+            ErrorCode::AnyIo => f.write_str("IO error"),
             ErrorCode::EofWhileParsingValue => f.write_str("EOF while parsing a value"),
             ErrorCode::EofWhileParsingArray => f.write_str("EOF while parsing an array"),
             ErrorCode::EofWhileParsingMap => f.write_str("EOF while parsing a map"),
