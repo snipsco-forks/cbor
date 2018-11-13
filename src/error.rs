@@ -8,7 +8,7 @@ use std::result;
 
 /// This type represents all possible errors that can occur when serializing or deserializing CBOR
 /// data.
-pub struct Error(Box<ErrorImpl>);
+pub struct Error(ErrorImpl);
 
 /// Alias for a `Result` with the error type `serde_cbor::Error`.
 pub type Result<T> = result::Result<T, Error>;
@@ -32,14 +32,14 @@ impl Error {
     }
 
     pub(crate) fn syntax(code: ErrorCode, offset: u64) -> Error {
-        Error(Box::new(ErrorImpl { code, offset }))
+        Error(ErrorImpl { code, offset })
     }
 
     pub(crate) fn io(error: io::Error) -> Error {
-        Error(Box::new(ErrorImpl {
+        Error(ErrorImpl {
             code: ErrorCode::Io(error),
             offset: 0,
-        }))
+        })
     }
 
     /// Categorizes the cause of this error.
@@ -123,7 +123,7 @@ impl fmt::Display for Error {
 
 impl fmt::Debug for Error {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Debug::fmt(&*self.0, fmt)
+        fmt::Debug::fmt(&self.0, fmt)
     }
 }
 
@@ -132,10 +132,10 @@ impl de::Error for Error {
     where
         T: fmt::Display,
     {
-        Error(Box::new(ErrorImpl {
+        Error(ErrorImpl {
             code: ErrorCode::Message(msg.to_string()),
             offset: 0,
-        }))
+        })
     }
 
     fn invalid_type(unexp: de::Unexpected, exp: &de::Expected) -> Error {
@@ -152,10 +152,10 @@ impl ser::Error for Error {
     where
         T: fmt::Display,
     {
-        Error(Box::new(ErrorImpl {
+        Error(ErrorImpl {
             code: ErrorCode::Message(msg.to_string()),
             offset: 0,
-        }))
+        })
     }
 }
 
@@ -185,7 +185,7 @@ pub(crate) enum ErrorCode {
 
 impl fmt::Display for ErrorCode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
+        match self {
             ErrorCode::Message(ref msg) => f.write_str(msg),
             ErrorCode::Io(ref err) => fmt::Display::fmt(err, f),
             ErrorCode::EofWhileParsingValue => f.write_str("EOF while parsing a value"),
