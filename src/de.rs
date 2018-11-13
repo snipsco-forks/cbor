@@ -4,10 +4,10 @@ use byteorder::{ByteOrder, BigEndian};
 use half::f16;
 use serde::de;
 use std::io;
-use std::str;
-use std::f32;
-use std::result;
-use std::marker::PhantomData;
+use core::str;
+use core::f32;
+use core::result;
+use core::marker::PhantomData;
 
 use error::{Error, Result, ErrorCode};
 use read::Reference;

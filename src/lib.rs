@@ -147,6 +147,8 @@
 
 #![deny(missing_docs)]
 
+extern crate core;
+
 extern crate byteorder;
 extern crate half;
 

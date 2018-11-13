@@ -1,4 +1,4 @@
-use std::cmp;
+use core::cmp;
 use std::io::{self, Read as StdRead};
 
 use error::{Result, Error, ErrorCode};

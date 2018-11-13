@@ -2,10 +2,10 @@
 use serde::de;
 use serde::ser;
 use std::error;
-use std::fmt;
+use core::fmt;
 #[cfg(feature = "std")]
 use std::io;
-use std::result;
+use core::result;
 
 /// This type represents all possible errors that can occur when serializing or deserializing CBOR
 /// data.
