@@ -163,6 +163,7 @@ extern crate serde;
 mod read;
 pub mod de;
 pub mod error;
+#[cfg(feature = "std")]
 pub mod ser;
 #[cfg(feature = "std")]
 pub mod value;
@@ -173,6 +174,7 @@ pub use de::{from_slice, Deserializer, StreamDeserializer};
 #[cfg(feature = "std")]
 pub use de::from_reader;
 #[doc(inline)]
+#[cfg(feature = "std")]
 pub use ser::{to_writer, to_vec, Serializer};
 #[doc(inline)]
 #[cfg(feature = "std")]
