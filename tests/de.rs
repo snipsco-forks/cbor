@@ -4,15 +4,19 @@ extern crate serde_bytes;
 use serde_bytes::ByteBuf;
 use std::collections::BTreeMap;
 
-use serde_cbor::{to_vec, Value, ObjectKey, error, de, Deserializer, from_reader};
+use serde_cbor::{to_vec, error, de, Deserializer, from_reader};
+#[cfg(feature = "std")]
+use serde_cbor::{Value, ObjectKey};
 
 #[test]
+#[cfg(feature = "std")]
 fn test_string1() {
     let value: error::Result<Value> = de::from_slice(&[0x66, 0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72]);
     assert_eq!(value.unwrap(), Value::String("foobar".to_owned()));
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn test_string2() {
     let value: error::Result<Value> = de::from_slice(&[0x71, 0x49, 0x20, 0x6d, 0x65, 0x74, 0x20, 0x61, 0x20, 0x74, 0x72, 0x61, 0x76,
         0x65, 0x6c, 0x6c, 0x65, 0x72]);
@@ -20,6 +24,7 @@ fn test_string2() {
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn test_string3() {
     let slice = b"\x78\x2fI met a traveller from an antique land who said";
     let value: error::Result<Value> = de::from_slice(slice);
@@ -27,54 +32,63 @@ fn test_string3() {
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn test_byte_string() {
     let value: error::Result<Value> = de::from_slice(&[0x46, 0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72]);
     assert_eq!(value.unwrap(), Value::Bytes(b"foobar".to_vec()));
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn test_numbers1() {
     let value: error::Result<Value> = de::from_slice(&[0x00]);
     assert_eq!(value.unwrap(), Value::U64(0));
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn test_numbers2() {
     let value: error::Result<Value> = de::from_slice(&[0x1a, 0x00, 0xbc, 0x61, 0x4e]);
     assert_eq!(value.unwrap(), Value::U64(12345678));
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn test_numbers3() {
     let value: error::Result<Value> = de::from_slice(&[0x39, 0x07, 0xde]);
     assert_eq!(value.unwrap(), Value::I64(-2015));
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn test_bool() {
     let value: error::Result<Value> = de::from_slice(b"\xf4");
     assert_eq!(value.unwrap(), Value::Bool(false));
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn test_trailing_bytes() {
     let value: error::Result<Value> = de::from_slice(b"\xf4trailing");
     assert!(value.is_err());
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn test_list1() {
     let value: error::Result<Value> = de::from_slice(b"\x83\x01\x02\x03");
     assert_eq!(value.unwrap(), Value::Array(vec![Value::U64(1), Value::U64(2), Value::U64(3)]));
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn test_list2() {
     let value: error::Result<Value> = de::from_slice(b"\x82\x01\x82\x02\x81\x03");
     assert_eq!(value.unwrap(), Value::Array(vec![Value::U64(1), Value::Array(vec![Value::U64(2), Value::Array(vec![Value::U64(3)])])]));
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn test_object() {
     let value: error::Result<Value> = de::from_slice(b"\xa5aaaAabaBacaCadaDaeaE");
     let mut object = BTreeMap::new();
@@ -87,6 +101,7 @@ fn test_object() {
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn test_indefinite_object() {
     let value: error::Result<Value> = de::from_slice(b"\xbfaa\x01ab\x9f\x02\x03\xff\xff");
     let mut object = BTreeMap::new();
@@ -96,24 +111,28 @@ fn test_indefinite_object() {
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn test_indefinite_list() {
     let value: error::Result<Value> = de::from_slice(b"\x9f\x01\x02\x03\xff");
     assert_eq!(value.unwrap(), Value::Array(vec![Value::U64(1), Value::U64(2), Value::U64(3)]));
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn test_indefinite_string() {
     let value: error::Result<Value> = de::from_slice(b"\x7f\x65Mary \x64Had \x62a \x67Little \x64Lamb\xff");
     assert_eq!(value.unwrap(), Value::String("Mary Had a Little Lamb".to_owned()));
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn test_indefinite_byte_string() {
     let value: error::Result<Value> = de::from_slice(b"\x5f\x42\x01\x23\x42\x45\x67\xff");
     assert_eq!(value.unwrap(), Value::Bytes(b"\x01#Eg".to_vec()));
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn test_multiple_indefinite_strings() {
     // This assures that buffer rewinding in infinite buffers works as intended.
     let value: error::Result<Value> = de::from_slice(b"\x82\x7f\x65Mary \x64Had \x62a \x67Little \x64Lamb\xff\x5f\x42\x01\x23\x42\x45\x67\xff");
@@ -124,6 +143,7 @@ fn test_multiple_indefinite_strings() {
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn test_float() {
     let value: error::Result<Value> = de::from_slice(b"\xfa\x47\xc3\x50\x00");
     assert_eq!(value.unwrap(), Value::F64(100000.0));
@@ -131,6 +151,7 @@ fn test_float() {
 
 
 #[test]
+#[cfg(feature = "std")]
 fn test_self_describing() {
     let value: error::Result<Value> = de::from_slice(&[0xd9, 0xd9, 0xf7, 0x66, 0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72]);
     assert_eq!(value.unwrap(), Value::String("foobar".to_owned()));
@@ -138,6 +159,7 @@ fn test_self_describing() {
 
 
 #[test]
+#[cfg(feature = "std")]
 fn test_f16() {
     let mut x: Value = de::from_slice(&[0xf9, 0x41, 0x00]).unwrap();
     assert_eq!(x, Value::F64(2.5));
@@ -150,6 +172,7 @@ fn test_f16() {
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn test_crazy_list() {
     let slice = b"\x88\x1b\x00\x00\x00\x1c\xbe\x99\x1d\xc7\x3b\x00\x7a\xcf\x51\xdc\x51\x70\xdb\x3a\x1b\x3a\x06\xdd\xf5\xf6\xf7\xfb\x41\x76\x5e\xb1\xf8\x00\x00\x00\xf9\x7c\x00";
     let value: Vec<Value> = de::from_slice(slice).unwrap();
@@ -177,6 +200,7 @@ fn test_32f16() {
 }
 
 #[test]
+#[cfg(feature = "std")]
 // The file was reported as not working by user kie0tauB
 // but it parses to a cbor value.
 fn test_kietaub_file() {
@@ -208,6 +232,7 @@ fn test_option_none_roundtrip() {
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn test_variable_length_map() {
     let slice = b"\xbf\x67\x6d\x65\x73\x73\x61\x67\x65\x64\x70\x6f\x6e\x67\xff";
     let value: Value = de::from_slice(slice).unwrap();
@@ -217,6 +242,7 @@ fn test_variable_length_map() {
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn test_object_determinism_roundtrip() {
     let expected = b"\xa2aa\x01ab\x82\x02\x03";
 
@@ -227,6 +253,7 @@ fn test_object_determinism_roundtrip() {
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn stream_deserializer() {
     let slice = b"\x01\x66foobar";
     let mut it = Deserializer::from_slice(slice).into_iter::<Value>();
@@ -236,6 +263,7 @@ fn stream_deserializer() {
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn stream_deserializer_eof() {
     let slice = b"\x01\x66foob";
     let mut it = Deserializer::from_slice(slice).into_iter::<Value>();

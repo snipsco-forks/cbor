@@ -105,11 +105,14 @@
 //! Read a general CBOR value with an unknown content.
 //!
 //! ```rust
+//! # #[cfg(feature = "std")]
+//! # {
 //! use serde_cbor::{from_slice, Value};
 //!
 //! let slice = b"\x82\x01\xa1aaab";
 //! let value: Value = from_slice(slice).unwrap();
 //! println!("{:?}", value); // Array([U64(1), Object({String("a"): String("b")})])
+//! # }
 //! ```
 //!
 //! Serialize an object.
@@ -159,6 +162,7 @@ mod read;
 pub mod de;
 pub mod error;
 pub mod ser;
+#[cfg(feature = "std")]
 pub mod value;
 
 #[doc(inline)]
@@ -166,4 +170,5 @@ pub use de::{from_slice, from_reader, Deserializer, StreamDeserializer};
 #[doc(inline)]
 pub use ser::{to_writer, to_vec, Serializer};
 #[doc(inline)]
+#[cfg(feature = "std")]
 pub use value::{Value, ObjectKey, to_value, from_value};
