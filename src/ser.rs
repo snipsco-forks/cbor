@@ -467,6 +467,7 @@ where
         false
     }
 
+    #[cfg(not(feature = "std"))]
     fn collect_str<T: ?Sized>(self, value: &T) -> Result<()> where
         T: core::fmt::Display,
     {

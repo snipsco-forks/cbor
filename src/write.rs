@@ -7,7 +7,14 @@ use error;
 ///
 /// It depends on core::fmt::Write to allow easy implementation of
 /// serde::ser::Serializer::collect_string.
+#[cfg(not(feature = "std"))]
 pub trait Write: core::fmt::Write {
+    type Error: Into<error::Error>;
+
+    fn write_all(&mut self, buf: &[u8]) -> Result<(), Self::Error>;
+}
+#[cfg(feature = "std")]
+pub trait Write {
     type Error: Into<error::Error>;
 
     fn write_all(&mut self, buf: &[u8]) -> Result<(), Self::Error>;
