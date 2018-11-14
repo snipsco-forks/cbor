@@ -7,7 +7,9 @@ use std::u8;
 
 use serde_bytes::ByteBuf;
 
-use serde_cbor::{from_slice, from_reader};
+use serde_cbor::from_slice;
+#[cfg(feature = "std")]
+use serde_cbor::from_reader;
 use serde_cbor::ser::{to_vec, to_vec_packed};
 
 fn to_binary(s: &'static str) -> Vec<u8> {
@@ -33,11 +35,14 @@ macro_rules! testcase {
                 assert!(parsed.is_nan())
             }
 
-            let parsed: f64 = from_reader(&mut &serialized[..]).unwrap();
-            if !expr.is_nan() {
-                assert_eq!(expr, parsed);
-            } else {
-                assert!(parsed.is_nan())
+            #[cfg(feature = "std")]
+            {
+                let parsed: f64 = from_reader(&mut &serialized[..]).unwrap();
+                if !expr.is_nan() {
+                    assert_eq!(expr, parsed);
+                } else {
+                    assert!(parsed.is_nan())
+                }
             }
         }
     };
@@ -55,13 +60,16 @@ macro_rules! testcase {
                 .expect("parsing packed");
             assert_eq!(parsed_from_packed, expr, "packed roundtrip fail");
 
-            let parsed: $ty = from_reader(&mut &serialized[..]).unwrap();
-            assert_eq!(parsed, expr, "parsed result differs");
-            let packed = to_vec_packed(&expr)
-                .expect("serializing packed");
-            let parsed_from_packed: $ty = from_reader(&mut &packed[..])
-                .expect("parsing packed");
-            assert_eq!(parsed_from_packed, expr, "packed roundtrip fail");
+            #[cfg(feature = "std")]
+            {
+                let parsed: $ty = from_reader(&mut &serialized[..]).unwrap();
+                assert_eq!(parsed, expr, "parsed result differs");
+                let packed = to_vec_packed(&expr)
+                    .expect("serializing packed");
+                let parsed_from_packed: $ty = from_reader(&mut &packed[..])
+                    .expect("parsing packed");
+                assert_eq!(parsed_from_packed, expr, "packed roundtrip fail");
+            }
         }
     }
 }

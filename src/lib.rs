@@ -166,7 +166,10 @@ pub mod ser;
 pub mod value;
 
 #[doc(inline)]
-pub use de::{from_slice, from_reader, Deserializer, StreamDeserializer};
+pub use de::{from_slice, Deserializer, StreamDeserializer};
+#[doc(inline)]
+#[cfg(feature = "std")]
+pub use de::from_reader;
 #[doc(inline)]
 pub use ser::{to_writer, to_vec, Serializer};
 #[doc(inline)]

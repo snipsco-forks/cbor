@@ -1,16 +1,17 @@
 use core::cmp;
+#[cfg(feature = "std")]
 use std::io::{self, Read as StdRead};
 
-use error::{Result, Error, ErrorCode};
+use error::{Result, Error, ErrorCode, IoResult};
 
 /// Trait used by the deserializer for iterating over input.
 ///
 /// This trait is sealed and cannot be implemented for types outside of `serde_cbor`.
 pub trait Read<'de>: private::Sealed {
     #[doc(hidden)]
-    fn next(&mut self) -> io::Result<Option<u8>>;
+    fn next(&mut self) -> IoResult<Option<u8>>;
     #[doc(hidden)]
-    fn peek(&mut self) -> io::Result<Option<u8>>;
+    fn peek(&mut self) -> IoResult<Option<u8>>;
 
     #[doc(hidden)]
     fn read(
@@ -40,6 +41,7 @@ mod private {
 }
 
 /// CBOR input source that reads from a std::io input stream.
+#[cfg(feature = "std")]
 pub struct IoRead<R>
 where
     R: io::Read,
@@ -48,6 +50,7 @@ where
     ch: Option<u8>,
 }
 
+#[cfg(feature = "std")]
 impl<R> IoRead<R>
 where
     R: io::Read,
@@ -64,7 +67,7 @@ where
     }
 
     #[inline]
-    fn next_inner(&mut self) -> io::Result<Option<u8>> {
+    fn next_inner(&mut self) -> IoResult<Option<u8>> {
         let mut buf = [0; 1];
         loop {
             match self.reader.read(&mut buf) {
@@ -77,18 +80,20 @@ where
     }
 }
 
+#[cfg(feature = "std")]
 impl<R> private::Sealed for IoRead<R>
 where
     R: io::Read,
 {
 }
 
+#[cfg(feature = "std")]
 impl<'de, R> Read<'de> for IoRead<R>
 where
     R: io::Read,
 {
     #[inline]
-    fn next(&mut self) -> io::Result<Option<u8>> {
+    fn next(&mut self) -> IoResult<Option<u8>> {
         match self.ch.take() {
             Some(ch) => Ok(Some(ch)),
             None => self.next_inner(),
@@ -96,7 +101,7 @@ where
     }
 
     #[inline]
-    fn peek(&mut self) -> io::Result<Option<u8>> {
+    fn peek(&mut self) -> IoResult<Option<u8>> {
         match self.ch {
             Some(ch) => Ok(Some(ch)),
             None => {
@@ -162,17 +167,19 @@ where
     }
 }
 
+#[cfg(feature = "std")]
 struct OffsetReader<R> {
     reader: R,
     offset: u64,
 }
 
+#[cfg(feature = "std")]
 impl<R> io::Read for OffsetReader<R>
 where
     R: io::Read,
 {
     #[inline]
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+    fn read(&mut self, buf: &mut [u8]) -> IoResult<usize> {
         let r = self.reader.read(buf);
         if let Ok(count) = r {
             self.offset += count as u64;
@@ -213,7 +220,7 @@ impl<'a> private::Sealed for SliceRead<'a> {}
 
 impl<'a> Read<'a> for SliceRead<'a> {
     #[inline]
-    fn next(&mut self) -> io::Result<Option<u8>> {
+    fn next(&mut self) -> IoResult<Option<u8>> {
         Ok(if self.index < self.slice.len() {
             let ch = self.slice[self.index];
             self.index += 1;
@@ -224,7 +231,7 @@ impl<'a> Read<'a> for SliceRead<'a> {
     }
 
     #[inline]
-    fn peek(&mut self) -> io::Result<Option<u8>> {
+    fn peek(&mut self) -> IoResult<Option<u8>> {
         Ok(if self.index < self.slice.len() {
             Some(self.slice[self.index])
         } else {

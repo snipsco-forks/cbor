@@ -14,6 +14,19 @@ pub struct Error(ErrorImpl);
 /// Alias for a `Result` with the error type `serde_cbor::Error`.
 pub type Result<T> = result::Result<T, Error>;
 
+/// Alias for a `Result` with the error type `std::io::Error` when std is available, or an
+/// uninhabited type in no-std environments.
+/// Later iterations of the no_std conversion process might drop IoResult in favor of
+/// result::Result again and have Read's result-returning functions return a `Result<...,
+/// Self::Error>`.
+#[cfg(feature = "std")]
+pub(crate) type IoResult<T> = result::Result<T, io::Error>;
+#[cfg(not(feature = "std"))]
+pub(crate) type IoResult<T> = result::Result<T, Uninhabited>;
+/// An uninhabited type (to be replaced with `!` once RFC1216 is stabilized)
+#[cfg(not(feature = "std"))]
+pub enum Uninhabited {}
+
 /// Categorizes the cause of a `serde_cbor::Error`.
 pub enum Category {
     /// The error was caused by a failure to read or write bytes on an IO stream.

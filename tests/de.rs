@@ -4,9 +4,9 @@ extern crate serde_bytes;
 use serde_bytes::ByteBuf;
 use std::collections::BTreeMap;
 
-use serde_cbor::{to_vec, error, de, Deserializer, from_reader};
+use serde_cbor::{to_vec, error, de, Deserializer, from_slice};
 #[cfg(feature = "std")]
-use serde_cbor::{Value, ObjectKey};
+use serde_cbor::{Value, ObjectKey, from_reader};
 
 #[test]
 #[cfg(feature = "std")]
@@ -214,7 +214,7 @@ fn test_option_roundtrip() {
     let obj1 = Some(10u32);
 
     let v = to_vec(&obj1).unwrap();
-    let obj2: Result<Option<u32>, _> = serde_cbor::de::from_reader(&v[..]);
+    let obj2: Result<Option<u32>, _> = serde_cbor::de::from_slice(&v[..]);
     println!("{:?}", obj2);
 
     assert_eq!(obj1, obj2.unwrap());
@@ -226,7 +226,7 @@ fn test_option_none_roundtrip() {
 
     let v = to_vec(&obj1).unwrap();
     println!("{:?}", v);
-    let obj2: Result<Option<u32>, _> = serde_cbor::de::from_reader(&v[..]);
+    let obj2: Result<Option<u32>, _> = serde_cbor::de::from_slice(&v[..]);
 
     assert_eq!(obj1, obj2.unwrap());
 }
@@ -291,6 +291,6 @@ fn test_large_bytes() {
     let expected = ByteBuf::from(expected);
     let v = to_vec(&expected).unwrap();
 
-    let actual = from_reader(&v[..]).unwrap();
+    let actual = from_slice(&v[..]).unwrap();
     assert_eq!(expected, actual);
 }

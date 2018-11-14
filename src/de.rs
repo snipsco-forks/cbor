@@ -3,6 +3,7 @@
 use byteorder::{ByteOrder, BigEndian};
 use half::f16;
 use serde::de;
+#[cfg(feature = "std")]
 use std::io;
 use core::str;
 use core::f32;
@@ -11,7 +12,9 @@ use core::marker::PhantomData;
 
 use error::{Error, Result, ErrorCode};
 use read::Reference;
-pub use read::{Read, IoRead, SliceRead};
+pub use read::{Read, SliceRead};
+#[cfg(feature = "std")]
+pub use read::IoRead;
 
 /// Decodes a value from CBOR data in a slice.
 ///
@@ -65,6 +68,7 @@ where
 /// let value: &str = de::from_reader(&v[..]).unwrap();
 /// assert_eq!(value, "foobar");
 /// ```
+#[cfg(feature = "std")]
 pub fn from_reader<T, R>(reader: R) -> Result<T>
 where
     T: de::DeserializeOwned,
@@ -83,6 +87,7 @@ pub struct Deserializer<R> {
     remaining_depth: u8,
 }
 
+#[cfg(feature = "std")]
 impl<R> Deserializer<IoRead<R>>
 where
     R: io::Read,
