@@ -53,6 +53,7 @@ where
 }
 
 /// Serializes a value to a vector.
+#[cfg(feature = "std")]
 pub fn to_vec<T>(value: &T) -> Result<Vec<u8>>
 where
     T: ser::Serialize,
@@ -63,6 +64,7 @@ where
 }
 
 /// Serializes a value to a vector and adds a CBOR self-describe tag.
+#[cfg(feature = "std")]
 pub fn to_vec_sd<T>(value: &T) -> Result<Vec<u8>>
 where
     T: ser::Serialize,
@@ -76,6 +78,7 @@ where
 ///
 /// Struct fields and enum variants are identified by their numeric indices rather than names to
 /// save space.
+#[cfg(feature = "std")]
 pub fn to_vec_packed<T>(value: &T) -> Result<Vec<u8>>
 where
     T: ser::Serialize,
@@ -88,6 +91,7 @@ where
 ///
 /// Struct fields and enum variants are identified by their numeric indices rather than names to
 /// save space.
+#[cfg(feature = "std")]
 pub fn to_vec_packed_sd<T>(value: &T) -> Result<Vec<u8>>
 where
     T: ser::Serialize,

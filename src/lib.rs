@@ -164,7 +164,6 @@ mod read;
 mod write;
 pub mod de;
 pub mod error;
-#[cfg(feature = "std")]
 pub mod ser;
 #[cfg(feature = "std")]
 pub mod value;
