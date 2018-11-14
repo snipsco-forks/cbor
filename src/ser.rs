@@ -2,14 +2,14 @@
 use byteorder::{ByteOrder, BigEndian};
 use half::f16;
 use serde::ser::{self, Serialize};
-use std::io;
+use write::{self, Write};
 
 use error::{Error, Result};
 
 /// Serializes a value to a writer.
 pub fn to_writer<W, T>(mut writer: &mut W, value: &T) -> Result<()>
 where
-    W: io::Write,
+    W: write::Write,
     T: ser::Serialize,
 {
     value.serialize(&mut Serializer::new(&mut writer))
@@ -18,7 +18,7 @@ where
 /// Serializes a value to a writer and adds a CBOR self-describe tag.
 pub fn to_writer_sd<W, T>(mut writer: &mut W, value: &T) -> Result<()>
 where
-    W: io::Write,
+    W: write::Write,
     T: ser::Serialize,
 {
     let mut ser = Serializer::new(&mut writer);
@@ -32,7 +32,7 @@ where
 /// save space.
 pub fn to_writer_packed<W, T>(mut writer: &mut W, value: &T) -> Result<()>
 where
-    W: io::Write,
+    W: write::Write,
     T: ser::Serialize,
 {
     value.serialize(&mut Serializer::packed(&mut writer))
@@ -44,7 +44,7 @@ where
 /// save space.
 pub fn to_writer_packed_sd<W, T>(mut writer: &mut W, value: &T) -> Result<()>
 where
-    W: io::Write,
+    W: write::Write,
     T: ser::Serialize,
 {
     let mut ser = Serializer::packed(&mut writer);
@@ -105,7 +105,7 @@ pub struct Serializer<W> {
 
 impl<W> Serializer<W>
 where
-    W: io::Write,
+    W: write::Write,
 {
     /// Creates a new CBOR serializer.
     #[inline]
@@ -214,7 +214,7 @@ where
 
 impl<'a, W> ser::Serializer for &'a mut Serializer<W>
 where
-    W: io::Write,
+    W: write::Write,
 {
     type Ok = ();
     type Error = Error;
@@ -466,7 +466,7 @@ where
 
 impl<'a, W> ser::SerializeTuple for &'a mut Serializer<W>
 where
-    W: io::Write,
+    W: write::Write,
 {
     type Ok = ();
     type Error = Error;
@@ -487,7 +487,7 @@ where
 
 impl<'a, W> ser::SerializeTupleStruct for &'a mut Serializer<W>
 where
-    W: io::Write,
+    W: write::Write,
 {
     type Ok = ();
     type Error = Error;
@@ -508,7 +508,7 @@ where
 
 impl<'a, W> ser::SerializeTupleVariant for &'a mut Serializer<W>
 where
-    W: io::Write,
+    W: write::Write,
 {
     type Ok = ();
     type Error = Error;
@@ -535,7 +535,7 @@ pub struct StructSerializer<'a, W: 'a> {
 
 impl<'a, W> StructSerializer<'a, W>
 where
-    W: io::Write,
+    W: write::Write,
 {
     #[inline]
     fn serialize_field_inner<T>(&mut self, key: &'static str, value: &T) -> Result<()>
@@ -560,7 +560,7 @@ where
 
 impl<'a, W> ser::SerializeStruct for StructSerializer<'a, W>
 where
-    W: io::Write,
+    W: write::Write,
 {
     type Ok = ();
     type Error = Error;
@@ -586,7 +586,7 @@ where
 
 impl<'a, W> ser::SerializeStructVariant for StructSerializer<'a, W>
 where
-    W: io::Write,
+    W: write::Write,
 {
     type Ok = ();
     type Error = Error;
@@ -618,7 +618,7 @@ pub struct CollectionSerializer<'a, W: 'a> {
 
 impl<'a, W> CollectionSerializer<'a, W>
 where
-    W: io::Write,
+    W: write::Write,
 {
     #[inline]
     fn end_inner(self) -> Result<()> {
@@ -632,7 +632,7 @@ where
 
 impl<'a, W> ser::SerializeSeq for CollectionSerializer<'a, W>
 where
-    W: io::Write,
+    W: write::Write,
 {
     type Ok = ();
     type Error = Error;
@@ -653,7 +653,7 @@ where
 
 impl<'a, W> ser::SerializeMap for CollectionSerializer<'a, W>
 where
-    W: io::Write,
+    W: write::Write,
 {
     type Ok = ();
     type Error = Error;
