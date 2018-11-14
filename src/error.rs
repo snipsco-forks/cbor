@@ -1,6 +1,7 @@
 //! When serializing or deserializing CBOR goes wrong.
 use serde::de;
 use serde::ser;
+#[cfg(feature = "std")]
 use std::error;
 use core::fmt;
 #[cfg(feature = "std")]
@@ -136,25 +137,6 @@ impl error::Error for Error {
     fn cause(&self) -> Option<&error::Error> {
         match self.0.code {
             ErrorCode::Io(ref err) => Some(err),
-            _ => None,
-        }
-    }
-}
-
-// Temporary installment until everything in this crate is as lenient with std::error::Error being
-// implemneted on errors as serde is
-#[cfg(not(feature = "std"))]
-impl error::Error for Error {
-    fn description(&self) -> &str {
-        match self.0.code {
-            ErrorCode::AnyIo => unimplemented!(),
-            _ => "CBOR error",
-        }
-    }
-
-    fn cause(&self) -> Option<&error::Error> {
-        match self.0.code {
-            ErrorCode::AnyIo => unimplemented!(),
             _ => None,
         }
     }
