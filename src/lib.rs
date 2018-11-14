@@ -162,6 +162,7 @@ extern crate serde;
 
 mod read;
 mod write;
+pub use write::WindowedInfinity;
 pub mod de;
 pub mod error;
 pub mod ser;
