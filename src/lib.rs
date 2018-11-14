@@ -161,6 +161,7 @@ extern crate half;
 extern crate serde;
 
 mod read;
+mod write;
 pub mod de;
 pub mod error;
 #[cfg(feature = "std")]
