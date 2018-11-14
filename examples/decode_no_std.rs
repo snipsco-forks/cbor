@@ -16,12 +16,21 @@
 extern crate serde_derive;
 extern crate serde;
 
-#[derive(Debug, Deserialize, PartialEq)]
+use serde::Serialize;
+
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 struct Color(u16, u16, u16);
 
 fn main() {
-    let red = b"\x83\x19\x12\x34\x00\x00";
-    let red: Color = serde_cbor::from_slice(&red[..]).unwrap();
+    let input = b"\x83\x19\x12\x34\x00\x00";
+    let red: Color = serde_cbor::from_slice(&input[..]).unwrap();
     assert!(red == Color(4660, 0, 0));
     // println!("{:?}", red);
+
+    let mut buf = [255u8; 10];
+    {
+        let mut w = serde_cbor::WindowedInfinity::new(&mut buf, 0);
+        red.serialize(&mut serde_cbor::ser::Serializer::new(&mut w));
+    }
+    assert!(&buf[..input.len()] == input, "Reserialization changed");
 }
