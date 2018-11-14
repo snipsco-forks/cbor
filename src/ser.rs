@@ -136,7 +136,7 @@ where
     pub fn self_describe(&mut self) -> Result<()> {
         let mut buf = [6 << 5 | 25, 0, 0];
         BigEndian::write_u16(&mut buf[1..], 55799);
-        self.writer.write_all(&buf).map_err(Error::io)
+        self.writer.write_all(&buf).map_err(|e| e.into())
     }
 
     /// Unwrap the `Writer` from the `Serializer`.
@@ -152,7 +152,7 @@ where
         } else {
             let buf = [major << 5 | 24, value];
             self.writer.write_all(&buf)
-        }.map_err(Error::io)
+        }.map_err(|e| e.into())
     }
 
     #[inline]
@@ -162,7 +162,7 @@ where
         } else {
             let mut buf = [major << 5 | 25, 0, 0];
             BigEndian::write_u16(&mut buf[1..], value);
-            self.writer.write_all(&buf).map_err(Error::io)
+            self.writer.write_all(&buf).map_err(|e| e.into())
         }
     }
 
@@ -173,7 +173,7 @@ where
         } else {
             let mut buf = [major << 5 | 26, 0, 0, 0, 0];
             BigEndian::write_u32(&mut buf[1..], value);
-            self.writer.write_all(&buf).map_err(Error::io)
+            self.writer.write_all(&buf).map_err(|e| e.into())
         }
     }
 
@@ -184,7 +184,7 @@ where
         } else {
             let mut buf = [major << 5 | 27, 0, 0, 0, 0, 0, 0, 0, 0];
             BigEndian::write_u64(&mut buf[1..], value);
-            self.writer.write_all(&buf).map_err(Error::io)
+            self.writer.write_all(&buf).map_err(|e| e.into())
         }
     }
 
@@ -200,7 +200,7 @@ where
                 false
             }
             None => {
-                self.writer.write_all(&[major << 5 | 31]).map_err(Error::io)?;
+                self.writer.write_all(&[major << 5 | 31]).map_err(|e| e.into())?;
                 true
             }
         };
@@ -230,7 +230,7 @@ where
     #[inline]
     fn serialize_bool(self, value: bool) -> Result<()> {
         let value = if value { 0xf5 } else { 0xf4 };
-        self.writer.write_all(&[value]).map_err(Error::io)
+        self.writer.write_all(&[value]).map_err(|e| e.into())
     }
 
     #[inline]
@@ -307,7 +307,7 @@ where
             let mut buf = [0xfa, 0, 0, 0, 0];
             BigEndian::write_f32(&mut buf[1..], value);
             self.writer.write_all(&buf)
-        }.map_err(Error::io)
+        }.map_err(|e| e.into())
     }
 
     #[inline]
@@ -317,7 +317,7 @@ where
         } else {
             let mut buf = [0xfb, 0, 0, 0, 0, 0, 0, 0, 0];
             BigEndian::write_f64(&mut buf[1..], value);
-            self.writer.write_all(&buf).map_err(Error::io)
+            self.writer.write_all(&buf).map_err(|e| e.into())
         }
     }
 
@@ -331,13 +331,13 @@ where
     #[inline]
     fn serialize_str(self, value: &str) -> Result<()> {
         self.write_u64(3, value.len() as u64)?;
-        self.writer.write_all(value.as_bytes()).map_err(Error::io)
+        self.writer.write_all(value.as_bytes()).map_err(|e| e.into())
     }
 
     #[inline]
     fn serialize_bytes(self, value: &[u8]) -> Result<()> {
         self.write_u64(2, value.len() as u64)?;
-        self.writer.write_all(value).map_err(Error::io)
+        self.writer.write_all(value).map_err(|e| e.into())
     }
 
     #[inline]
@@ -355,7 +355,7 @@ where
 
     #[inline]
     fn serialize_none(self) -> Result<()> {
-        self.writer.write_all(&[0xf6]).map_err(Error::io)
+        self.writer.write_all(&[0xf6]).map_err(|e| e.into())
     }
 
     #[inline]
@@ -396,7 +396,7 @@ where
     where
         T: ?Sized + ser::Serialize,
     {
-        self.writer.write_all(&[4 << 5 | 2]).map_err(Error::io)?;
+        self.writer.write_all(&[4 << 5 | 2]).map_err(|e| e.into())?;
         self.serialize_unit_variant(name, variant_index, variant)?;
         value.serialize(self)
     }
@@ -453,7 +453,7 @@ where
         variant: &'static str,
         len: usize,
     ) -> Result<StructSerializer<'a, W>> {
-        self.writer.write_all(&[4 << 5 | 2]).map_err(Error::io)?;
+        self.writer.write_all(&[4 << 5 | 2]).map_err(|e| e.into())?;
         self.serialize_unit_variant(name, variant_index, variant)?;
         self.serialize_struct(name, len)
     }
@@ -623,7 +623,7 @@ where
     #[inline]
     fn end_inner(self) -> Result<()> {
         if self.needs_eof {
-            self.ser.writer.write_all(&[0xff]).map_err(Error::io)
+            self.ser.writer.write_all(&[0xff]).map_err(|e| e.into())
         } else {
             Ok(())
         }

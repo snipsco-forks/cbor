@@ -126,6 +126,33 @@ impl Error {
 }
 
 #[cfg(feature = "std")]
+impl From<io::Error> for Error {
+    fn from(error: io::Error) -> Self {
+        Error(ErrorImpl {
+            code: ErrorCode::Io(error),
+            offset: 0,
+        })
+    }
+}
+
+#[cfg(feature = "std")]
+impl From<()> for Error {
+    fn from(error: ()) -> Self {
+        unimplemented!()
+    }
+}
+
+#[cfg(not(feature = "std"))]
+impl From<()> for Error {
+    fn from(error: ()) -> Self {
+        Error(ErrorImpl {
+            code: ErrorCode::AnyIo,
+            offset: 0
+        })
+    }
+}
+
+#[cfg(feature = "std")]
 impl error::Error for Error {
     fn description(&self) -> &str {
         match self.0.code {
