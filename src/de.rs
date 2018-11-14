@@ -83,6 +83,7 @@ where
 /// A Serde `Deserialize`r of CBOR data.
 pub struct Deserializer<R> {
     read: R,
+    #[cfg(feature = "std")]
     buf: Vec<u8>,
     remaining_depth: u8,
 }
@@ -117,6 +118,7 @@ where
     pub fn new(read: R) -> Self {
         Deserializer {
             read,
+            #[cfg(feature = "std")]
             buf: Vec::new(),
             remaining_depth: 128,
         }
@@ -185,6 +187,7 @@ where
         Ok(BigEndian::read_u64(&buf))
     }
 
+    #[cfg(feature = "std")]
     fn parse_bytes<V>(&mut self, len: usize, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -196,6 +199,15 @@ where
         }
     }
 
+    #[cfg(not(feature = "std"))]
+    fn parse_bytes<V>(&mut self, len: usize, visitor: V) -> Result<V::Value>
+    where
+        V: de::Visitor<'de>,
+    {
+        unimplemented!("Byte parsing requires growable buffer");
+    }
+
+    #[cfg(feature = "std")]
     fn parse_indefinite_bytes(&mut self) -> Result<&[u8]> {
         let mut offset = 0;
         self.buf.clear();
@@ -234,6 +246,11 @@ where
         Ok(&self.buf[..offset])
     }
 
+    #[cfg(not(feature = "std"))]
+    fn parse_indefinite_bytes(&mut self) -> Result<&[u8]> {
+        unimplemented!("Byte parsing requires growable buffer");
+    }
+
     fn convert_str<'a>(&self, buf: &'a [u8]) -> Result<&'a str> {
         match str::from_utf8(buf) {
             Ok(s) => Ok(s),
@@ -245,6 +262,7 @@ where
         }
     }
 
+    #[cfg(feature = "std")]
     fn parse_str<V>(&mut self, len: usize, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -262,6 +280,15 @@ where
         }
     }
 
+    #[cfg(not(feature = "std"))]
+    fn parse_str<V>(&mut self, len: usize, visitor: V) -> Result<V::Value>
+    where
+        V: de::Visitor<'de>,
+    {
+        unimplemented!("Byte parsing requires growable buffer");
+    }
+
+    #[cfg(feature = "std")]
     fn parse_indefinite_str(&mut self) -> Result<&str> {
         let mut offset = 0;
         self.buf.clear();
@@ -298,6 +325,11 @@ where
         }
 
         self.convert_str(&self.buf[..offset])
+    }
+
+    #[cfg(not(feature = "std"))]
+    fn parse_indefinite_str(&mut self) -> Result<&str> {
+        unimplemented!("Byte parsing requires growable buffer");
     }
 
     fn recursion_checked<F, T>(&mut self, f: F) -> Result<T>

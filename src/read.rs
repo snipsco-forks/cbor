@@ -14,6 +14,7 @@ pub trait Read<'de>: private::Sealed {
     fn peek(&mut self) -> IoResult<Option<u8>>;
 
     #[doc(hidden)]
+    #[cfg(feature = "std")]
     fn read(
         &mut self,
         n: usize,
@@ -111,6 +112,7 @@ where
         }
     }
 
+    #[cfg(feature = "std")]
     fn read(
         &mut self,
         mut n: usize,
@@ -240,6 +242,7 @@ impl<'a> Read<'a> for SliceRead<'a> {
     }
 
     #[inline]
+    #[cfg(feature = "std")]
     fn read(&mut self, n: usize, _: &mut Vec<u8>, _: usize) -> Result<Reference<'a>> {
         let end = self.end(n)?;
         let slice = &self.slice[self.index..end];
