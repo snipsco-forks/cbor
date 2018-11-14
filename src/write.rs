@@ -4,7 +4,10 @@ use std::io;
 use error;
 
 /// This is a trait similar to std::io::Write, but with potientially different errors.
-pub trait Write {
+///
+/// It depends on core::fmt::Write to allow easy implementation of
+/// serde::ser::Serializer::collect_string.
+pub trait Write: core::fmt::Write {
     type Error: Into<error::Error>;
 
     fn write_all(&mut self, buf: &[u8]) -> Result<(), Self::Error>;

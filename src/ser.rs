@@ -466,6 +466,14 @@ where
     fn is_human_readable(&self) -> bool {
         false
     }
+
+    fn collect_str<T: ?Sized>(self, value: &T) -> Result<()> where
+        T: core::fmt::Display,
+    {
+        // Unwrapping like the default implementation does
+        write!(self.writer, "{}", value).unwrap();
+        Ok(())
+    }
 }
 
 impl<'a, W> ser::SerializeTuple for &'a mut Serializer<W>
