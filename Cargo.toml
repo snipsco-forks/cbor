@@ -18,10 +18,16 @@ half = "1.2.0"
 serde = { version = "1.0.14", default-features = false }
 
 [dev-dependencies]
-serde_bytes = "0.10"
-serde_derive = "1.0.14"
+serde_bytes = { version = "0.10", default-features = false }
+serde_derive = { version = "1.0.14", default-features = false }
+
+# Needed for the decode_no_std example
+#libc = "*"
 
 [features]
 
 default = ["std"]
-std = []
+# serde/std is not strictly required by serde_cbor/std, but probably useful.
+# The other direction is actually more critical, as serde_cbor w/o std won't
+# implement all trait requirements (Error: std::error::Error) for serde/std.
+std = [ "serde/std", "serde_bytes/std" ]
