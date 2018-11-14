@@ -1,3 +1,4 @@
+#![cfg_attr(not(feature = "std"), no_std)]
 //! CBOR and serialization.
 //!
 //! # What is CBOR?
@@ -150,6 +151,7 @@
 
 #![deny(missing_docs)]
 
+#[cfg(feature = "std")]
 extern crate core;
 
 extern crate byteorder;
