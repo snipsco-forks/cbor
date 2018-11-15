@@ -56,6 +56,15 @@ impl<'a> WindowedInfinity<'a> {
     pub fn new(view: &'a mut [u8], cursor: isize) -> Self {
         WindowedInfinity { view, cursor }
     }
+
+    /// Report the current write cursor position in the index space of the view.
+    ///
+    /// This typically used at the end of an infinity's life time to see whether the view needs to
+    /// be truncated before further processing, and whether there was any data discarded after the
+    /// view.
+    pub fn get_cursor(&self) -> isize {
+        self.cursor
+    }
 }
 
 impl<'a> Write for WindowedInfinity<'a>
