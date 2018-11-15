@@ -204,7 +204,8 @@ where
     where
         V: de::Visitor<'de>,
     {
-        unimplemented!("Byte parsing requires growable buffer");
+        // This is std parse_bytes, stripped down to the Borrowed case
+        visitor.visit_borrowed_bytes(self.read.read_borrowed(len)?)
     }
 
     #[cfg(feature = "std")]
@@ -248,7 +249,7 @@ where
 
     #[cfg(not(feature = "std"))]
     fn parse_indefinite_bytes(&mut self) -> Result<&[u8]> {
-        unimplemented!("Byte parsing requires growable buffer");
+        unimplemented!("Indefinite byte parsing requires growable buffer");
     }
 
     fn convert_str<'a>(&self, buf: &'a [u8]) -> Result<&'a str> {
@@ -285,7 +286,10 @@ where
     where
         V: de::Visitor<'de>,
     {
-        unimplemented!("Byte parsing requires growable buffer");
+        // This is std parse_str, stripped down to the Borrowed case
+        let buf = self.read.read_borrowed(len)?;
+        let s = self.convert_str(buf)?;
+        visitor.visit_borrowed_str(s)
     }
 
     #[cfg(feature = "std")]
@@ -329,7 +333,7 @@ where
 
     #[cfg(not(feature = "std"))]
     fn parse_indefinite_str(&mut self) -> Result<&str> {
-        unimplemented!("Byte parsing requires growable buffer");
+        unimplemented!("Indefinite yte parsing requires growable buffer");
     }
 
     fn recursion_checked<F, T>(&mut self, f: F) -> Result<T>

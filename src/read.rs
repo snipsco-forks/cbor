@@ -21,6 +21,13 @@ pub trait Read<'de>: private::Sealed {
         scratch: &mut Vec<u8>,
         scratch_offset: usize,
     ) -> Result<Reference<'de>>;
+    // Default implemetation could be:
+    //  self.read_borrowed(n).map(|r| Reference::Borrowed(r))
+
+    #[doc(hidden)]
+    #[cfg(not(feature = "std"))]
+    // This is like a read() that unconditionally returns a Borrowed(r).
+    fn read_borrowed(&mut self, n: usize) -> Result<&'de [u8]>;
 
     #[doc(hidden)]
     fn read_into(&mut self, buf: &mut [u8]) -> Result<()>;
@@ -112,7 +119,6 @@ where
         }
     }
 
-    #[cfg(feature = "std")]
     fn read(
         &mut self,
         mut n: usize,
@@ -248,6 +254,15 @@ impl<'a> Read<'a> for SliceRead<'a> {
         let slice = &self.slice[self.index..end];
         self.index = end;
         Ok(Reference::Borrowed(slice))
+    }
+
+    #[inline]
+    #[cfg(not(feature = "std"))]
+    fn read_borrowed(&mut self, n: usize) -> Result<&'a [u8]> {
+        let end = self.end(n)?;
+        let slice = &self.slice[self.index..end];
+        self.index = end;
+        Ok(slice)
     }
 
     #[inline]
