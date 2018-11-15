@@ -88,7 +88,8 @@ impl Error {
             ErrorCode::TrailingData |
             ErrorCode::ArrayTooShort |
             ErrorCode::ArrayTooLong |
-            ErrorCode::RecursionLimitExceeded => Category::Syntax,
+            ErrorCode::RecursionLimitExceeded |
+            ErrorCode::IndefiniteWithoutAlloc => Category::Syntax,
         }
     }
 
@@ -253,6 +254,7 @@ pub(crate) enum ErrorCode {
     ArrayTooShort,
     ArrayTooLong,
     RecursionLimitExceeded,
+    IndefiniteWithoutAlloc,
 }
 
 impl fmt::Display for ErrorCode {
@@ -278,6 +280,7 @@ impl fmt::Display for ErrorCode {
             ErrorCode::ArrayTooShort => f.write_str("array too short"),
             ErrorCode::ArrayTooLong => f.write_str("array too long"),
             ErrorCode::RecursionLimitExceeded => f.write_str("recursion limit exceeded"),
+            ErrorCode::IndefiniteWithoutAlloc => f.write_str("indefinite bytes/strings require std"),
         }
     }
 }

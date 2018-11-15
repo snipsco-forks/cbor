@@ -249,7 +249,7 @@ where
 
     #[cfg(not(feature = "std"))]
     fn parse_indefinite_bytes(&mut self) -> Result<&[u8]> {
-        unimplemented!("Indefinite byte parsing requires growable buffer");
+        Err(self.error(ErrorCode::IndefiniteWithoutAlloc))
     }
 
     fn convert_str<'a>(&self, buf: &'a [u8]) -> Result<&'a str> {
@@ -333,7 +333,7 @@ where
 
     #[cfg(not(feature = "std"))]
     fn parse_indefinite_str(&mut self) -> Result<&str> {
-        unimplemented!("Indefinite yte parsing requires growable buffer");
+        Err(self.error(ErrorCode::IndefiniteWithoutAlloc))
     }
 
     fn recursion_checked<F, T>(&mut self, f: F) -> Result<T>
