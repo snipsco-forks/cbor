@@ -244,7 +244,7 @@ fn stream_deserializer_eof() {
 }
 
 #[test]
-fn stream_deserializer_of_in_indefinite() {
+fn stream_deserializer_eof_in_indefinite() {
     let slice = b"\x7f\x65Mary \x64Had \x62a \x67Little \x64Lamb\xff";
     let indices: &[usize] = &[
         2, // announcement but no data
