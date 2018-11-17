@@ -126,7 +126,11 @@ where
             }
 
             let transfer_result = {
+                // Prepare for take() (which consumes its reader) by creating a reference adaptor
+                // that'll only live in this block
                 let reference = self.reader.by_ref();
+                // Append the first to_read bytes of the reader to the scratch vector (or up to
+                // an error or EOF indicated by a shorter read)
                 let mut taken = reference.take(to_read as u64);
                 taken.read_to_end(scratch)
             };
