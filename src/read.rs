@@ -20,13 +20,6 @@ pub trait Read<'de>: private::Sealed {
         &mut self,
         n: usize,
     ) -> Result<Reference<'de>>;
-    // Default implemetation could be:
-    //  self.read_borrowed(n).map(|r| Reference::Borrowed(r))
-
-    #[doc(hidden)]
-    #[cfg(not(feature = "std"))]
-    // This is like a read() that unconditionally returns a Borrowed(r).
-    fn read_borrowed(&mut self, n: usize) -> Result<&'de [u8]>;
 
     #[doc(hidden)]
     fn clear_buffer(&mut self);
@@ -419,15 +412,6 @@ impl<'a> Read<'a> for MutSliceRead<'a> {
         // No unsafe tricks necessary here -- we could give out a longer lifetime, because to us
         // all data in the buffer is immutable, but the Vec<u8> based readers can't do that.
         &self.slice[self.buffer_start..self.buffer_end]
-    }
-
-    #[inline]
-    #[cfg(not(feature = "std"))]
-    fn read_borrowed(&mut self, n: usize) -> Result<&'a [u8]> {
-        let end = self.end(n)?;
-        let slice = &self.slice[self.index..end];
-        self.index = end;
-        Ok(slice)
     }
 
     #[inline]
