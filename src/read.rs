@@ -211,6 +211,7 @@ where
 /// A CBOR input source that reads from a slice of bytes.
 pub struct SliceRead<'a> {
     slice: &'a [u8],
+    #[cfg(feature = "std")]
     scratch: Vec<u8>,
     index: usize,
 }
@@ -220,6 +221,7 @@ impl<'a> SliceRead<'a> {
     pub fn new(slice: &'a [u8]) -> SliceRead<'a> {
         SliceRead {
             slice,
+            #[cfg(feature = "std")]
             scratch: vec![],
             index: 0,
         }
@@ -262,9 +264,11 @@ impl<'a> Read<'a> for SliceRead<'a> {
     }
 
     fn clear_buffer(&mut self) {
+        #[cfg(feature = "std")]
         self.scratch.clear();
     }
 
+    #[cfg(feature = "std")]
     fn read_to_buffer(&mut self, n: usize) -> Result<()> {
         let end = self.end(n)?;
         let slice = &self.slice[self.index..end];
@@ -272,6 +276,11 @@ impl<'a> Read<'a> for SliceRead<'a> {
         self.index = end;
 
         Ok(())
+    }
+
+    #[cfg(not(feature = "std"))]
+    fn read_to_buffer(&mut self, n: usize) -> Result<()> {
+        Err(Error::syntax(ErrorCode::IndefiniteOutOfMemory, self.offset()))
     }
 
     #[inline]
@@ -282,8 +291,15 @@ impl<'a> Read<'a> for SliceRead<'a> {
         Ok(Reference::Borrowed(slice))
     }
 
+    #[cfg(feature = "std")]
     fn view_buffer<'b>(&'b mut self) -> &'b [u8] {
         &self.scratch
+    }
+
+    #[cfg(not(feature = "std"))]
+    fn view_buffer<'b>(&'b mut self) -> &'b [u8] {
+        // read_to_buffer can never have succeeded
+        &[]
     }
 
     #[inline]
