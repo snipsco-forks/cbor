@@ -351,7 +351,7 @@ impl<'a> private::Sealed for MutSliceRead<'a> {}
 
 impl<'a> Read<'a> for MutSliceRead<'a> {
     #[inline]
-    fn next(&mut self) -> io::Result<Option<u8>> {
+    fn next(&mut self) -> IoResult<Option<u8>> {
         // This is duplicated from SliceRead, can that be eased?
         Ok(if self.index < self.slice.len() {
             let ch = self.slice[self.index];
@@ -363,7 +363,7 @@ impl<'a> Read<'a> for MutSliceRead<'a> {
     }
 
     #[inline]
-    fn peek(&mut self) -> io::Result<Option<u8>> {
+    fn peek(&mut self) -> IoResult<Option<u8>> {
         // This is duplicated from SliceRead, can that be eased?
         Ok(if self.index < self.slice.len() {
             Some(self.slice[self.index])
