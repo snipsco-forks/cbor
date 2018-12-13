@@ -3,6 +3,8 @@ use std::io::{self, Read as StdRead};
 
 use error::{Result, Error, ErrorCode};
 
+use sealingslice::SealingSlice;
+
 /// Trait used by the deserializer for iterating over input.
 ///
 /// This trait is sealed and cannot be implemented for types outside of `serde_cbor`.
@@ -317,40 +319,35 @@ impl<'a> Read<'a> for SliceRead<'a> {
 /// A CBOR input source that reads from a slice of bytes, and can move data around internally to
 /// reassemble indefinite strings without the need of an allocated scratch buffer.
 ///
-/// This is implemented using unsafe code, which relies on the implementation not to mutate the
-/// slice wherever immutable references have been handed out; that position is tracked in
-/// buffer_end.
+/// This is implemented using the sealingslice crate, which exposes this "interior immutability" in
+/// a safe way.
 pub struct MutSliceRead<'a> {
-    /// A complete view of the reader's data. It is promised that bytes before buffer_end are not
-    /// mutated any more.
-    slice: &'a mut [u8],
-    /// Read cursor position in slice
+    /// A complete view of the reader's data.
+    slice: SealingSlice<'a, u8>,
+    /// Read cursor position in the mutable part of the slice
     index: usize,
-    /// Index when clear() was last called
+    /// Length of the immutable part when clear() was last called.
     buffer_start: usize,
-    /// End of the buffer area that contains all bytes read_into_buffer. Doubles as end of
-    /// immutability guarantee.
-    buffer_end: usize,
 }
 
 impl<'a> MutSliceRead<'a> {
     /// Creates a CBOR input source to read from a slice of bytes.
     pub fn new(slice: &'a mut [u8]) -> MutSliceRead<'a> {
         MutSliceRead {
-            slice,
+            slice: SealingSlice::new(slice),
             index: 0,
             buffer_start: 0,
-            buffer_end: 0,
         }
     }
 
-    fn end(&self, n: usize) -> Result<usize> {
+    fn end(&mut self, n: usize) -> Result<usize> {
+        let mutlen = self.slice.mutable().len();
         match self.index.checked_add(n) {
-            Some(end) if end <= self.slice.len() => Ok(end),
+            Some(end) if end <= mutlen => Ok(end),
             _ => {
                 Err(Error::syntax(
                     ErrorCode::EofWhileParsingValue,
-                    self.slice.len() as u64,
+                    (self.slice.sealed().len() + mutlen) as u64,
                 ))
             }
         }
@@ -362,74 +359,50 @@ impl<'a> private::Sealed for MutSliceRead<'a> {}
 impl<'a> Read<'a> for MutSliceRead<'a> {
     #[inline]
     fn next(&mut self) -> io::Result<Option<u8>> {
-        // This is duplicated from SliceRead, can that be eased?
-        Ok(if self.index < self.slice.len() {
-            let ch = self.slice[self.index];
+        let next = self.peek();
+        if let Ok(Some(_)) = next {
             self.index += 1;
-            Some(ch)
-        } else {
-            None
-        })
+        };
+        next
     }
 
     #[inline]
     fn peek(&mut self) -> io::Result<Option<u8>> {
-        // This is duplicated from SliceRead, can that be eased?
-        Ok(if self.index < self.slice.len() {
-            Some(self.slice[self.index])
-        } else {
-            None
-        })
+        Ok(self.slice.mutable().get(self.index).cloned())
     }
 
     fn clear_buffer<'b>(&'b mut self) {
-        self.buffer_start = self.index;
-        self.buffer_end = self.index;
+        self.slice.seal(self.index);
+        self.buffer_start = self.slice.sealed().len();
+        self.index = 0;
     }
 
     fn read_to_buffer(&mut self, n: usize) -> Result<()> {
         let end = self.end(n)?;
-        assert!(self.buffer_end <= self.index, "MutSliceRead invariant violated: scratch buffer exceeds index");
-        self.slice[self.buffer_end..end].rotate_left(self.index - self.buffer_end);
-        self.buffer_end += n;
-        self.index = end;
+        self.slice.mutable()[..end].rotate_left(self.index);
+        self.slice.seal(n);
+
+        // self.index stays the same -- index was some bytes ahead of the seal before, and didn't
+        // move relative to it.
 
         Ok(())
     }
 
     #[inline]
     fn read<'b>(&'b mut self, n: usize) -> Result<EitherLifetime<'b, 'a>> {
-        let end = self.end(n)?;
-        let slice = &self.slice[self.index..end];
-        self.index = end;
-
-        // Not technically required to keep track of things under realistic (ie. either read
-        // or clear_buffer+n*read_to_buffer is called) conditions, but given we don't want to rely
-        // on these condition to maintain safety, this updates the immutability contract of the
-        // slice.
-        self.buffer_start = self.index;
-        self.buffer_end = self.index;
-
-        // Unsafe: Extending the lifetime from during-the-function to 'a ("for as long as
-        // MutSliceRead is in mutable control of the data"), which is OK because MutSliceRead
-        // promises to never mutate data before buffer_end.
-        let extended_result = unsafe { &*(slice as *const _) };
-
-        Ok(EitherLifetime::Long(extended_result))
+        self.clear_buffer();
+        self.read_to_buffer(n)?;
+        Ok(self.view_buffer())
     }
 
     fn view_buffer<'b>(&'b self) -> EitherLifetime<'b, 'a> {
-        // This would work as well, but ...
-        // EitherLifetime::Short(&self.slice[self.buffer_start..self.buffer_end])
-        // Unsafe: Same rationale as in read applies
-        EitherLifetime::Long(unsafe { &*(&self.slice[self.buffer_start..self.buffer_end] as *const _) })
+        EitherLifetime::Long(&self.slice.sealed()[self.buffer_start..])
     }
 
     #[inline]
     fn read_into(&mut self, buf: &mut [u8]) -> Result<()> {
-        // This is duplicated from SliceRead, can that be eased?
         let end = self.end(buf.len())?;
-        buf.copy_from_slice(&self.slice[self.index..end]);
+        buf.copy_from_slice(&self.slice.mutable()[self.index..end]);
         self.index = end;
         Ok(())
     }
@@ -440,6 +413,6 @@ impl<'a> Read<'a> for MutSliceRead<'a> {
     }
 
     fn offset(&self) -> u64 {
-        self.index as u64
+        (self.slice.sealed().len() + self.index) as u64
     }
 }

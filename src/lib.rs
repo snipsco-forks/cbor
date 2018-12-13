@@ -153,6 +153,8 @@ extern crate half;
 #[macro_use]
 extern crate serde;
 
+extern crate sealingslice;
+
 mod read;
 pub mod de;
 pub mod error;
