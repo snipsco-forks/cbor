@@ -15,7 +15,7 @@ categories = ["encoding"]
 [dependencies]
 byteorder = { version = "1.0.0", default-features = false }
 half = "1.2.0"
-serde = { version = "1.0.14", default-features = false }
+serde2 = { git = "https://github.com/bendst/serde", default-features = false }
 
 [dev-dependencies]
 serde_bytes = { version = "0.10", default-features = false }
@@ -30,4 +30,4 @@ default = ["std"]
 # serde/std is not strictly required by serde_cbor/std, but probably useful.
 # The other direction is actually more critical, as serde_cbor w/o std won't
 # implement all trait requirements (Error: std::error::Error) for serde/std.
-std = [ "serde/std" ]
+std = [ "serde2/std" ]

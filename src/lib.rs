@@ -158,7 +158,7 @@ extern crate byteorder;
 extern crate half;
 
 #[macro_use]
-extern crate serde;
+extern crate serde2;
 
 mod read;
 mod write;

@@ -1,7 +1,7 @@
 //! Serialize a Rust data structure to CBOR data.
 use byteorder::{ByteOrder, BigEndian};
 use half::f16;
-use serde::ser::{self, Serialize};
+use serde2::ser::{self, Serialize};
 use write::{self, Write};
 
 use error::{Error, Result};

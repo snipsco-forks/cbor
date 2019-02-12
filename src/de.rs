@@ -2,7 +2,7 @@
 
 use byteorder::{ByteOrder, BigEndian};
 use half::f16;
-use serde::de;
+use serde2::de;
 #[cfg(feature = "std")]
 use std::io;
 use core::str;
